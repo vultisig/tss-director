@@ -69,24 +69,38 @@ func (s *Server) GetMessage(c echo.Context) error {
 	if strings.Trim(sessionID, " ") == "" || strings.Trim(participantID, " ") == "" {
 		return c.NoContent(http.StatusBadRequest)
 	}
+	c.Logger().Debug("session ID is ", sessionID, ", participant ID is ", participantID)
 	messages, err := s.s.GetMessage(sessionID, participantID)
 	if err == storage.ErrNotFound {
 		return c.NoContent(http.StatusOK)
+	}
+	// delete the message after receive it
+	if err := s.s.DeleteMessage(sessionID, participantID); err != nil {
+		c.Logger().Errorf("fail to delete messages of session %s, participant ID: %s,err: %w", sessionID, participantID, err)
+		return c.NoContent(http.StatusInternalServerError)
 	}
 	return c.JSON(http.StatusOK, messages)
 }
 func (s *Server) PostMessage(c echo.Context) error {
 	sessionID := c.Param("sessionID")
 	if strings.Trim(sessionID, " ") == "" {
+		c.Logger().Error("session ID is empty")
 		return c.NoContent(http.StatusBadRequest)
 	}
+	c.Logger().Debug("session ID is ", sessionID)
 	var m model.Message
 	if err := c.Bind(&m); err != nil {
+		c.Logger().Error(err)
 		return c.NoContent(http.StatusBadRequest)
 	}
 	p, err := s.s.GetSession(sessionID)
 	if err == storage.ErrNotFound {
 		return c.NoContent(http.StatusNotFound)
+	} else {
+		if err != nil {
+			c.Logger().Error(err)
+			return c.NoContent(http.StatusInternalServerError)
+		}
 	}
 	if m.To == nil {
 		return c.NoContent(http.StatusBadRequest)
