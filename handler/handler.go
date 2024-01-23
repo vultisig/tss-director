@@ -24,18 +24,28 @@ func (s *Server) StartSession(c echo.Context) error {
 	if strings.Trim(sessionID, " ") == "" {
 		return c.NoContent(http.StatusBadRequest)
 	}
-	if _, err := s.s.GetSession(sessionID); err != storage.ErrNotFound {
-		return c.NoContent(http.StatusConflict)
-	}
 	var p []string
 	if err := c.Bind(&p); err != nil {
 		return c.NoContent(http.StatusBadRequest)
 	}
 
 	if err := s.s.SetSession(sessionID, p); err != nil {
+		c.Logger().Error(err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
 	return c.NoContent(http.StatusCreated)
+}
+
+func (s *Server) GetSession(c echo.Context) error {
+	sessionID := c.Param("sessionID")
+	if strings.Trim(sessionID, " ") == "" {
+		return c.NoContent(http.StatusBadRequest)
+	}
+	p, err := s.s.GetSession(sessionID)
+	if err == storage.ErrNotFound {
+		return c.NoContent(http.StatusNotFound)
+	}
+	return c.JSON(http.StatusOK, p)
 }
 
 // EndSession is to end a session. Remove all relevant messages

@@ -18,6 +18,7 @@ func main() {
 	store := storage.NewInMemoryStorage()
 	s := handler.NewServer(store)
 	e.POST("/:sessionID", s.StartSession)
+	e.GET("/:sessionID", s.GetSession)
 	e.DELETE("/:sessionID", s.EndSession)
 	e.GET(("/message/:sessionID/:participantID"), s.GetMessage)
 	e.POST(("/message/:sessionID"), s.PostMessage)
