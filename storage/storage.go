@@ -36,7 +36,20 @@ func NewInMemoryStorage() *InMemoryStorage {
 func (s *InMemoryStorage) SetSession(sessionID string, participants []string) error {
 	existingParticipants, err := s.GetSession(sessionID)
 	if err == nil {
-		existingParticipants = append(existingParticipants, participants...)
+		for _, p := range participants {
+			needAdd := true
+			for _, existingP := range existingParticipants {
+				if p == existingP {
+					needAdd = false
+					continue
+				}
+			}
+			// add the participant if it does not exist
+			if needAdd {
+				existingParticipants = append(existingParticipants, p)
+			}
+		}
+
 		return s.cache.Replace(sessionID, existingParticipants, cache.DefaultExpiration)
 	}
 	return s.cache.Add(sessionID, participants, cache.DefaultExpiration)

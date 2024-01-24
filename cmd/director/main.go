@@ -14,7 +14,7 @@ func main() {
 	e.Pre(middleware.RemoveTrailingSlash())
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
-	e.Use(middleware.BodyLimit("10M")) // set maximum allowed size for a request body to 10M
+	e.Use(middleware.BodyLimit("100M")) // set maximum allowed size for a request body to 10M
 	store := storage.NewInMemoryStorage()
 	s := handler.NewServer(store)
 	e.POST("/:sessionID", s.StartSession)
